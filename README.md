@@ -11,7 +11,7 @@ echo '{"server": "https://10.100.6.10:6443",  "name": "hello" }' | direktiv-sync
 Lists all pods with the label `server: http`.
 
 ```sh
-echo '{"server": "https://10.100.6.10:6443",  "name": "hello" }' | direktiv-sync exec list-pods.yaml
+echo '{"server": "https://10.100.6.10:6443" }' | direktiv-sync exec list-pods.yaml
 ```
 
 # Pod Check
