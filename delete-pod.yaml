@@ -1,0 +1,30 @@
+functions:
+- id: kubectl
+  image: direktiv.azurecr.io/functions/kubectl:1.0
+  type: knative-workflow
+states:
+
+- id: validate
+  type: validate
+  schema:
+    title: Delete Httpd Pod
+    type: object
+    required: ["name", "server"]
+    properties:
+      name:
+        type: string
+        title: Name
+      server:
+        type: string
+        title: Name
+  transition: kubectl
+
+- id: kubectl
+  type: action
+  action:
+    secrets: ["kubeconfig"]
+    function: kubectl
+    input: 
+      kubeconfig: jq(.secrets.kubeconfig | @base64)
+      commands:
+      - command: kubectl delete pod -s jq(.server) jq(.name)

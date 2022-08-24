@@ -1,0 +1,32 @@
+functions:
+- id: kubectl
+  image: direktiv.azurecr.io/functions/kubectl:1.0
+  type: knative-workflow
+states:
+
+- id: validate
+  type: validate
+  schema:
+    title: List Httpd Pods
+    type: object
+    required: ["server"]
+    properties:
+      server:
+        type: string
+        title: Name
+  transition: kubectl
+
+- id: kubectl
+  type: action
+  action:
+    secrets: ["kubeconfig"]
+    function: kubectl
+    input: 
+      kubeconfig: jq(.secrets.kubeconfig | @base64)
+      commands:
+      # pick all pods with 'server: http' label
+      - command: kubectl get pods -s jq(.server) --selector=server=http -n direktiv-services-direktiv --output json
+        silent: true
+ # transform the result and only return the pod names
+  transform:
+    pods: jq([.return.kubectl[0].result.items.[] | .metadata.name])

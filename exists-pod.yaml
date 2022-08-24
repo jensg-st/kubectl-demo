@@ -1,0 +1,42 @@
+functions:
+- id: kubectl
+  image: direktiv.azurecr.io/functions/kubectl:1.0
+  type: knative-workflow
+states:
+
+- id: validate
+  type: validate
+  schema:
+    title: Check Pod
+    type: object
+    required: ["name", "server"]
+    properties:
+      name:
+        type: string
+        title: Name
+      server:
+        type: string
+        title: Name
+  transition: kubectl
+
+- id: kubectl
+  type: action
+  action:
+    secrets: ["kubeconfig"]
+    function: kubectl
+    input: 
+      kubeconfig: jq(.secrets.kubeconfig | @base64)
+      commands:
+      # pick all pods with 'app: NAME' label
+      - command:  kubectl get pods -s https://10.100.6.10:6443 --selector=app=jq(.name) --output=jsonpath={.items..metadata.name} -n direktiv-services-direktiv
+  transition: check
+  
+- id: check
+  type: switch
+  conditions:
+  # if the result is an empty string it does not exist
+  - condition: jq(.return.kubectl[0].result == "")  
+    transform: 
+      exists: false
+  defaultTransform:
+    exists: true
